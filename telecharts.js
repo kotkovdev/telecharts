@@ -45,15 +45,13 @@ class Telecharts {
 	}
 
 	draw() {
-		let context = this;
-		this.chartData.columns.forEach(function(column, columnKey){
-			var color = ['red', 'green'];
+		this.chartData.columns.forEach((column, columnKey) => {
 			for (let [key, element] of column) {
 				if (key == 'x') {
-					context.drawBasis(column);
+					this.drawBasis(column);
 					break;
 				} else {
-					context.drawChart(column);
+					this.drawChart(column, this.chartData.colors[column[0]]);
 					break;
 				}
 			}
@@ -82,18 +80,30 @@ class Telecharts {
 		
 	}
 
-	drawChart(column, color) {
-		let position = 0;
-		let context = this;
-		let prevX = 0;
-		let prevY = this.drawArea.destinationY;
-		column.forEach(function(element){
-			if (Number.isInteger(element)) {
-				position+=3;
-				context.drawLine(prevX, prevY, position, context.drawArea.destinationY - element, 1, color);
-				prevX = position;
-				prevY = context.drawArea.destinationY - element;
+	calculatePixelWeight (size, maxValue) {
+		if (size > maxValue) {
+			return size/maxValue;
+		} else {
+			return maxValue/size;
+		}
+	}
 
+	drawChart(column, color) {
+
+		column.shift();
+		let step = this.calculatePixelWeight(this.canvasWidth, column.length);
+		console.log(step);
+		let position = 0;
+		let prevX = 0;
+		let prevY;
+		this.weightInPixel = this.calculatePixelWeight(this.drawArea.destinationY - this.drawArea.sourceY, Math.max(...column));
+		column.forEach((element) => {
+			
+			if (Number.isInteger(element)) {
+				position+=step;
+				this.drawLine(prevX, prevY, position, (this.drawArea.destinationY - element / this.weightInPixel), 2, color);
+				prevX = position;
+				prevY = this.drawArea.destinationY - element / this.weightInPixel;
 			}
 		});
 	}
